@@ -1,0 +1,54 @@
+//SPDX-License-Identifier:MIT
+pragma solidity ^0.8.4;
+contract p2p{
+    struct LENDER{
+        address payable lenderAddress;
+        uint Roi;
+        uint Loan_amount;
+    }
+    address payable public borrower;
+    constructor()
+    {
+        borrower = payable(msg.sender);
+    }
+    mapping(address =>uint256) borrower_balance;
+    LENDER[] public lenders;
+    function addlenders(address payable _lenderaddress,uint256 _roi,uint256 _Loanamount) public{
+        LENDER memory newLender=LENDER({lenderAddress:_lenderaddress,
+        Roi:_roi,
+        Loan_amount:_Loanamount});
+        lenders.push(newLender);
+    }
+    function getLenders() public view returns(LENDER[] memory)
+    {
+        return lenders;
+    }
+    function Borrow_from_lenders(uint _index) public payable 
+    {  
+        require(_index<lenders.length,"lenders is not present");
+        LENDER storage lender=lenders[_index];
+        require(borrower_balance[msg.sender]>lender.Loan_amount,"collateral is not sufficient");
+        uint fee=(lender.Loan_amount*lender.Roi)/100;
+        payable(msg.sender).transfer(lender.Loan_amount); 
+        borrower_balance[msg.sender]-=lender.Loan_amount;
+        lender.lenderAddress.transfer(fee);
+        
+    }
+
+    function borrower_wallet() external payable
+    {borrower_balance[msg.sender]+=msg.value;
+
+    }
+   
+    function withdraw(uint256 amount) external payable  
+  {  
+     payable(msg.sender).transfer(amount);
+     borrower_balance[msg.sender]-=amount;
+
+}
+function getBalance() external view returns(uint)
+{
+// return address(this).balance;
+return borrower_balance[msg.sender];
+}
+}
